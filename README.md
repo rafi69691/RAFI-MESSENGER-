@@ -1,9 +1,16 @@
-# RAFI Facebook Bot
+# 🤖 RAFI Facebook Bot
 
-Owner: 100052951819398
-Email: blueberryfree00@gmail.com
+Advanced Facebook Messenger Bot with Games, Economy, and Banking System.
 
-## Commands
-- .ping - Test bot
-- .help - Show commands
-- .owner - Owner info
+## 👑 Owner Information
+- **Owner ID:** 100052951819398
+- **Email:** **************
+- **Developer:** RAFI
+- **Version:** 5.0.0
+
+## 🚀 Quick Start
+
+### Installation
+```bash
+npm install
+node index.js

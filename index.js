@@ -1,14 +1,14 @@
 // ============================================
 // 🤖 RAFI BOT - SIMPLE VERSION
-// Owner: 100052951819398
-// Email:blueberryfree00@gmail.com
-// Password:RAFIEXY69
+// Owner:61555603974360
+// Email""
+// Password:""
 // ============================================
 
 console.log(`
 ╔══════════════════════════════╗
 ║      🤖 RAFI BOT STARTING   ║
-║      Owner: 100052951819398  ║
+║      Owner: 61555603974360  ║
 ╚══════════════════════════════╝
 `);
 
@@ -17,7 +17,7 @@ const fs = require("fs");
 
 // Configuration
 const config = {
-    ownerUID: "100052951819398",
+    ownerUID: "61555603974360",
     botName: "RAFI BOT 🤖",
     prefix: ".",
     version: "5.0"

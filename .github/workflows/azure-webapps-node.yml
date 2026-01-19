@@ -1,36 +1,50 @@
-name: Node.js CI
+name: Run Facebook Bot
 
+# কখন চালাবে
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [ main ]
+  schedule:
+    - cron: '*/30 * * * *'  # প্রতি 30 মিনিটে
+  workflow_dispatch:  # ম্যানুয়ালি চালানো
 
 jobs:
-  build:
+  run-bot:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+    
     steps:
-    # Step to check out the repository code
-    - uses: actions/checkout@v2
-
-    # Step to set up the specified Node.js version
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
+    # 1. Code ডাউনলোড
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    # 2. Node.js সেটআপ
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
-
-    # Step to install dependencies
+        node-version: '18'
+        
+    # 3. Dependencies ইনস্টল
     - name: Install dependencies
-      run: npm install
-
-    # Step to run the bot with the correct port
-    - name: Start the bot
-      env:
-        PORT: 8080
-      run: npm start
+      run: |
+        npm install
+        npm install fca-unofficial fs-extra
+        
+    # 4. Secrets থেকে Credentials লোড
+    - name: Setup credentials
+      run: |
+        echo "FB_EMAIL=${{ secrets.FB_EMAIL }}" >> .env
+        echo "FB_PASSWORD=${{ secrets.FB_PASSWORD }}" >> .env
+        echo "OWNER_UID=${{ secrets.OWNER_UID }}" >> .env
+        
+    # 5. Bot চালাও
+    - name: Run Bot
+      run: |
+        echo "🤖 Starting Facebook Bot..."
+        timeout 300 node bot.js || true
+        echo "Bot stopped, will restart..."
+        
+    # 6. Status চেক
+    - name: Check bot status
+      run: |
+        echo "✅ Bot process completed"
+        echo "🔄 Will restart in next schedule"

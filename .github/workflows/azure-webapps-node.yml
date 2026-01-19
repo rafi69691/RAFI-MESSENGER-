@@ -1,50 +1,63 @@
-name: Run Facebook Bot
+name: 24/7 Bot Runner
 
-# কখন চালাবে
 on:
-  push:
-    branches: [ main ]
   schedule:
-    - cron: '*/30 * * * *'  # প্রতি 30 মিনিটে
-  workflow_dispatch:  # ম্যানুয়ালি চালানো
+    - cron: '*/5 * * * *'  # প্রতি 5 মিনিটে
+  workflow_dispatch:
 
 jobs:
-  run-bot:
+  keep-bot-alive:
     runs-on: ubuntu-latest
     
     steps:
-    # 1. Code ডাউনলোড
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    # 2. Node.js সেটআপ
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: Start Bot
+      run: |
+        # Bot স্ক্রিপ্ট
+        cat > bot_runner.sh << 'EOF'
+        #!/bin/bash
+        echo "🤖 RAFI BOT STARTING..."
+        
+        # Bot কোড
+        cat > bot_simple.js << 'BOTCODE'
+        const login = require("fca-unofficial");
+        
+        login({
+          email: process.env.FB_EMAIL,
+          password: process.env.FB_PASSWORD
+        }, (err, api) => {
+          if (err) {
+            console.log("❌ Login error:", err.message);
+            process.exit(1);
+          }
+          
+          console.log("✅ Login success!");
+          api.setOptions({ listenEvents: true });
+          
+          api.listenMqtt((err, event) => {
+            if (event.body === ".ping") {
+              api.sendMessage("🏓 Pong from GitHub!", event.threadID);
+            }
+          });
+          
+          // 25 মিনিট রান করবে
+          setTimeout(() => {
+            console.log("🔄 Restarting...");
+            process.exit(0);
+          }, 25 * 60 * 1000);
+        });
+        BOTCODE
+        
+        # Run bot
+        node bot_simple.js
+        EOF
+        
+        chmod +x bot_runner.sh
+        timeout 1800 ./bot_runner.sh || true
+        
+    - name: Upload logs
+      uses: actions/upload-artifact@v3
       with:
-        node-version: '18'
-        
-    # 3. Dependencies ইনস্টল
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install fca-unofficial fs-extra
-        
-    # 4. Secrets থেকে Credentials লোড
-    - name: Setup credentials
-      run: |
-        echo "FB_EMAIL=${{ secrets.FB_EMAIL }}" >> .env
-        echo "FB_PASSWORD=${{ secrets.FB_PASSWORD }}" >> .env
-        echo "OWNER_UID=${{ secrets.OWNER_UID }}" >> .env
-        
-    # 5. Bot চালাও
-    - name: Run Bot
-      run: |
-        echo "🤖 Starting Facebook Bot..."
-        timeout 300 node bot.js || true
-        echo "Bot stopped, will restart..."
-        
-    # 6. Status চেক
-    - name: Check bot status
-      run: |
-        echo "✅ Bot process completed"
-        echo "🔄 Will restart in next schedule"
+        name: bot-logs
+        path: |
+          *.log
+        retention-days: 1

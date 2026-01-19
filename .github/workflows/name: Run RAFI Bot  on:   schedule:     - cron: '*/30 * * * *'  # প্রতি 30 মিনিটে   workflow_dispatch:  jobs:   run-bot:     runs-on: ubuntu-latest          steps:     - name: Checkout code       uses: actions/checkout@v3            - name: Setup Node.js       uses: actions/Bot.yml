@@ -2,29 +2,27 @@ name: Run RAFI Bot
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # প্রতি 30 মিনিটে
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-      
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        
     - name: Install dependencies
       run: npm install
-      
     - name: Run Bot
       env:
         FB_EMAIL: ${{ secrets.FB_EMAIL }}
         FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
       run: |
         echo "🤖 Starting RAFI Bot..."
-        timeout 1800 node index.js || echo "Bot stopped"
+        node index.js

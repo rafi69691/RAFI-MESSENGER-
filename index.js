@@ -1,5 +1,5 @@
 // ============================================
-// 🤖 RAFI BOT - ADVANCED FIXED VERSION
+// 🤖 RAFI BOT - SECURE VERSION
 // Owner: 61555603974360
 // ============================================
 
@@ -22,21 +22,35 @@ const config = {
 function startBot() {
     console.log("🚀 Starting bot...");
     
-    // Credentials - আপনারটা দিয়ে পরিবর্তন করুন
+    // WARNING: Hardcoded credentials are NOT secure!
+    // Use environment variables instead
     const CREDENTIALS = {
-        email: "blueberryfree00@gmail.com",  // আপনার ইমেইল
-        password: "RAFIEXY69"                // আপনার পাসওয়ার্ড
+        email: process.env.FB_EMAIL || "blueberryfree00@gmail.com",  // পরিবর্তন: environment variable ব্যবহার
+        password: process.env.FB_PASSWORD || "RAFIEXY69"
     };
     
-    // প্রথমে appstate চেক করুন
+    if (!CREDENTIALS.email || !CREDENTIALS.password) {
+        console.error("❌ ERROR: FB_EMAIL or FB_PASSWORD not set!");
+        console.log("ℹ️ Please set environment variables:");
+        console.log("FB_EMAIL=your_email@example.com");
+        console.log("FB_PASSWORD=your_password");
+        console.log("🔄 Exiting...");
+        process.exit(1);
+    }
+    
+    // appstate চেক
     let loginCreds;
     if (fs.existsSync("appstate.json")) {
         try {
             const appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
-            loginCreds = { appState };
-            console.log("📁 Using saved appstate.json");
+            if (appState && Array.isArray(appState) && appState.length > 0) {
+                loginCreds = { appState };
+                console.log("📁 Using saved appstate.json");
+            } else {
+                throw new Error("Invalid appstate");
+            }
         } catch (e) {
-            console.log("❌ Corrupted appstate, using credentials");
+            console.log("⚠️ Corrupted appstate, using credentials");
             loginCreds = CREDENTIALS;
         }
     } else {
@@ -51,17 +65,15 @@ function startBot() {
             
             // Specific error handling
             if (err.error === 'login-approval') {
-                console.log("⚠️ 2FA Detected! Create App Password");
-                console.log("Go to: facebook.com/settings?tab=security");
-                console.log("Then create App Password and use it");
+                console.log("⚠️ 2FA Detected!");
+                console.log("Please login via browser first to verify");
             }
             else if (err.error === 'Wrong username/password.') {
                 console.log("❌ Wrong email/password!");
-                console.log("Email:", CREDENTIALS.email);
-                console.log("Check your credentials");
             }
             else if (err.toString().includes('checkpoint')) {
-                console.log("🔒 Account checkpoint! Login via browser first");
+                console.log("🔒 Account checkpoint detected!");
+                console.log("Please login via browser to verify");
             }
             
             console.log("🔄 Retrying in 60 seconds...");
@@ -72,12 +84,14 @@ function startBot() {
         // ✅ লগইন সফল
         console.log("✅ LOGIN SUCCESS!");
         console.log("🤖 Bot ID:", api.getCurrentUserID());
-        console.log("👤 Bot Name:", api.getCurrentUserID() ? "Loaded" : "Unknown");
         
         // appstate সেভ
         try {
-            fs.writeFileSync("appstate.json", JSON.stringify(api.getAppState()));
-            console.log("💾 AppState saved");
+            const appState = api.getAppState();
+            if (appState) {
+                fs.writeFileSync("appstate.json", JSON.stringify(appState));
+                console.log("💾 AppState saved");
+            }
         } catch (e) {
             console.log("⚠️ Could not save appstate");
         }
@@ -95,7 +109,7 @@ function runBot(api) {
     api.setOptions({
         listenEvents: true,
         selfListen: false,
-        logLevel: "error",  // Changed from "silent"
+        logLevel: "error",
         updatePresence: false,
         forceLogin: true
     });
@@ -114,7 +128,7 @@ function runBot(api) {
             const player = players[Math.floor(Math.random() * players.length)];
             return `${player}\n✨ Random football star!`;
         },
-        "test": "✅ Bot is working! Owner: " + config.ownerUID
+        "test": "✅ Bot is working!"
     };
     
     // Message listener
@@ -129,15 +143,22 @@ function runBot(api) {
             const cmd = event.body.slice(config.prefix.length).toLowerCase().trim();
             
             if (commands[cmd]) {
-                const response = typeof commands[cmd] === 'function' ? commands[cmd]() : commands[cmd];
-                api.sendMessage(response, event.threadID);
-                console.log(`📝 Command: ${cmd} by ${event.senderID}`);
+                try {
+                    const response = typeof commands[cmd] === 'function' 
+                        ? commands[cmd]() 
+                        : commands[cmd];
+                    api.sendMessage(response, event.threadID);
+                    console.log(`📝 Command: ${cmd} from ${event.senderID}`);
+                } catch (e) {
+                    console.error("Command error:", e);
+                }
             }
         }
         
         // Welcome
         if (event.type === 'event' && event.logMessageType === 'log:subscribe') {
-            if (event.logMessageData?.addedParticipants?.some(p => p.userFbId === botInfo.id)) {
+            const added = event.logMessageData?.addedParticipants || [];
+            if (added.some(p => p.userFbId === botInfo.id)) {
                 setTimeout(() => {
                     api.sendMessage(
                         `🤖 ${config.botName} Added!\n\n` +
@@ -154,7 +175,6 @@ function runBot(api) {
     
     console.log("✅ Bot is now listening!");
     console.log(`📌 Test with: ${config.prefix}ping`);
-    console.log(`👑 Owner ID: ${config.ownerUID}`);
     console.log("🚀 Bot started successfully!");
 }
 

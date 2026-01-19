@@ -1,8 +1,8 @@
 // ============================================
 // 🤖 RAFI BOT - SIMPLE VERSION
 // Owner: 100052951819398
-// Email: blueberryfree00@gmail.com
-// Password: RAFIEXY69
+// Email:blueberryfree00@gmail.com
+// Password:RAFIEXY69
 // ============================================
 
 console.log(`

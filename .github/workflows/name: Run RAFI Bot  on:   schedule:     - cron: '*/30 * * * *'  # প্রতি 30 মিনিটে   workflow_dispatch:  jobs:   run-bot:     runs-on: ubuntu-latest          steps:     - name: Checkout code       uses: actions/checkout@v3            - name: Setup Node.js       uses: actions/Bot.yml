@@ -2,7 +2,7 @@ name: Run RAFI Bot
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'  # প্রতি 30 মিনিটে
   workflow_dispatch:
 
 jobs:
